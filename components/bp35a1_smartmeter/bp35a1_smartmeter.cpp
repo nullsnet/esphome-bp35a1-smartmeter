@@ -7,7 +7,7 @@ static const char *const TAG = "bp35a1_smartmeter";
 
 void BP35A1SmartMeterComponent::setup() {
     ESP_LOGI(TAG, "BP35A1 Smart Meter Component initialized");
-    ESP_LOGI(TAG, "B-route ID: %s", b_route_id_.c_str());
+    ESP_LOGD(TAG, "B-route ID: %s", b_route_id_.c_str());
 
     uart_adapter_ = new UARTDeviceAdapter(*this);
     bp35a1_ = new BP35A1(b_route_id_, b_route_password_, *uart_adapter_);
@@ -17,6 +17,7 @@ void BP35A1SmartMeterComponent::setup() {
             case BP35A1::InitializeState::readySmartMeter:
                 ESP_LOGI(TAG, "Initialization complete - ready for communication");
                 if (connection_sensor_) connection_sensor_->publish_state(true);
+                publish_info_sensors_();
                 break;
             case BP35A1::InitializeState::uninitialized:
                 ESP_LOGW(TAG, "Initialization reset");
@@ -30,9 +31,23 @@ void BP35A1SmartMeterComponent::setup() {
     init_start_ms_ = 0;
 }
 
-void BP35A1SmartMeterComponent::update() {
+void BP35A1SmartMeterComponent::loop() {
     if (!bp35a1_) return;
-    if (bp35a1_->getInitializeState() != BP35A1::InitializeState::readySmartMeter) return;
+
+    const uint32_t now = millis();
+    if (now - last_loop_ms_ < 100) return;
+    last_loop_ms_ = now;
+
+    if (bp35a1_->getInitializeState() != BP35A1::InitializeState::readySmartMeter) {
+        if (init_start_ms_ == 0) {
+            init_start_ms_ = now;
+        } else if (now - init_start_ms_ >= 180000) {
+            ESP_LOGE(TAG, "Initialization timeout (180s), restarting...");
+            esp_restart();
+        }
+        bp35a1_->initializeLoop();
+        return;
+    }
 
     bp35a1_->communicationLoop(
         [this](const LowVoltageSmartElectricEnergyMeterClass &meter) {
@@ -57,18 +72,49 @@ void BP35A1SmartMeterComponent::update() {
     );
 }
 
-void BP35A1SmartMeterComponent::loop() {
+void BP35A1SmartMeterComponent::update() {
     if (!bp35a1_) return;
-
     if (bp35a1_->getInitializeState() != BP35A1::InitializeState::readySmartMeter) {
-        if (init_start_ms_ == 0) {
-            init_start_ms_ = millis();
-        } else if (millis() - init_start_ms_ >= 180000) {
-            ESP_LOGE(TAG, "Initialization timeout (180s), restarting...");
-            esp_restart();
-        }
-        bp35a1_->initializeLoop();
         return;
+    }
+
+    ESP_LOGI(TAG, "Sending property request...");
+    bp35a1_->sendPropertyRequest({
+        LowVoltageSmartElectricEnergyMeterClass::Property::InstantaneousPower,
+        LowVoltageSmartElectricEnergyMeterClass::Property::InstantaneousCurrents,
+        LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyPositive,
+    });
+}
+
+void BP35A1SmartMeterComponent::publish_info_sensors_() {
+    ESP_LOGI(TAG, "Publishing device info sensors");
+
+    if (ipv6_address_text_sensor_) {
+        ipv6_address_text_sensor_->publish_state(bp35a1_->getLocalIpv6Address());
+    }
+    if (dest_ipv6_address_text_sensor_) {
+        dest_ipv6_address_text_sensor_->publish_state(bp35a1_->getCommunicationIpv6Address());
+    }
+    if (mac_address_text_sensor_) {
+        mac_address_text_sensor_->publish_state(bp35a1_->getMacAddress64());
+    }
+    if (mac_address_16_text_sensor_) {
+        mac_address_16_text_sensor_->publish_state(bp35a1_->getMacAddress16());
+    }
+    if (channel_text_sensor_) {
+        channel_text_sensor_->publish_state(bp35a1_->getChannel());
+    }
+    if (pan_id_text_sensor_) {
+        pan_id_text_sensor_->publish_state(bp35a1_->getPanId());
+    }
+    if (lqi_text_sensor_) {
+        lqi_text_sensor_->publish_state(bp35a1_->getLQI());
+    }
+    if (pair_id_text_sensor_) {
+        pair_id_text_sensor_->publish_state(bp35a1_->getPairId());
+    }
+    if (scan_mode_text_sensor_) {
+        scan_mode_text_sensor_->publish_state(bp35a1_->getScanModeString());
     }
 }
 
@@ -79,6 +125,15 @@ void BP35A1SmartMeterComponent::dump_config() {
     LOG_SENSOR("  ", "Current T", current_t_sensor_);
     LOG_SENSOR("  ", "Energy", energy_sensor_);
     LOG_BINARY_SENSOR("  ", "Connection", connection_sensor_);
+    LOG_TEXT_SENSOR("  ", "IPv6 Address", ipv6_address_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Dest IPv6 Address", dest_ipv6_address_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "MAC Address", mac_address_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "MAC Address 16", mac_address_16_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Channel", channel_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "PAN ID", pan_id_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "LQI", lqi_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Pair ID", pair_id_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Scan Mode", scan_mode_text_sensor_);
 }
 
 }  // namespace bp35a1_smartmeter

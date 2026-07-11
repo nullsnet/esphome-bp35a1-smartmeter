@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor, binary_sensor, uart
+from esphome.components import sensor, binary_sensor, text_sensor, uart
 from esphome.const import (
     CONF_ID,
     CONF_NAME,
@@ -33,6 +33,15 @@ CONF_CURRENT_R = "current_r"
 CONF_CURRENT_T = "current_t"
 CONF_ENERGY = "energy"
 CONF_CONNECTION = "connection"
+CONF_IPV6_ADDRESS = "ipv6_address"
+CONF_DEST_IPV6_ADDRESS = "dest_ipv6_address"
+CONF_MAC_ADDRESS = "mac_address"
+CONF_MAC_ADDRESS_16 = "mac_address_16"
+CONF_CHANNEL = "channel"
+CONF_PAN_ID = "pan_id"
+CONF_LQI = "lqi"
+CONF_PAIR_ID = "pair_id"
+CONF_SCAN_MODE = "scan_mode"
 
 CONFIG_SCHEMA = (
     cv.Schema(
@@ -91,6 +100,78 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_NAME, default="B-route Connection"): cv.string,
                 }
             ),
+            cv.Optional(CONF_IPV6_ADDRESS): text_sensor.text_sensor_schema(
+                icon="mdi:ip-network",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="IPv6 Address"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_DEST_IPV6_ADDRESS): text_sensor.text_sensor_schema(
+                icon="mdi:ip-network",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Dest IPv6 Address"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_MAC_ADDRESS): text_sensor.text_sensor_schema(
+                icon="mdi:barcode",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="MAC Address"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_MAC_ADDRESS_16): text_sensor.text_sensor_schema(
+                icon="mdi:barcode",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="MAC Address 16"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CHANNEL): text_sensor.text_sensor_schema(
+                icon="mdi:radio-tower",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Channel"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_PAN_ID): text_sensor.text_sensor_schema(
+                icon="mdi:identifier",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="PAN ID"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_LQI): text_sensor.text_sensor_schema(
+                icon="mdi:signal-cellular-1",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="LQI"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_PAIR_ID): text_sensor.text_sensor_schema(
+                icon="mdi:key-variant",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Pair ID"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_SCAN_MODE): text_sensor.text_sensor_schema(
+                icon="mdi:magnify-scan",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Scan Mode"): cv.string,
+                }
+            ),
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -125,3 +206,39 @@ async def to_code(config):
     if connection_conf := config.get(CONF_CONNECTION):
         bsens = await binary_sensor.new_binary_sensor(connection_conf)
         cg.add(var.set_connection_sensor(bsens))
+
+    if ipv6_conf := config.get(CONF_IPV6_ADDRESS):
+        tsens = await text_sensor.new_text_sensor(ipv6_conf)
+        cg.add(var.set_ipv6_address_text_sensor(tsens))
+
+    if dest_ipv6_conf := config.get(CONF_DEST_IPV6_ADDRESS):
+        tsens = await text_sensor.new_text_sensor(dest_ipv6_conf)
+        cg.add(var.set_dest_ipv6_address_text_sensor(tsens))
+
+    if mac_conf := config.get(CONF_MAC_ADDRESS):
+        tsens = await text_sensor.new_text_sensor(mac_conf)
+        cg.add(var.set_mac_address_text_sensor(tsens))
+
+    if mac_16_conf := config.get(CONF_MAC_ADDRESS_16):
+        tsens = await text_sensor.new_text_sensor(mac_16_conf)
+        cg.add(var.set_mac_address_16_text_sensor(tsens))
+
+    if channel_conf := config.get(CONF_CHANNEL):
+        tsens = await text_sensor.new_text_sensor(channel_conf)
+        cg.add(var.set_channel_text_sensor(tsens))
+
+    if pan_id_conf := config.get(CONF_PAN_ID):
+        tsens = await text_sensor.new_text_sensor(pan_id_conf)
+        cg.add(var.set_pan_id_text_sensor(tsens))
+
+    if lqi_conf := config.get(CONF_LQI):
+        tsens = await text_sensor.new_text_sensor(lqi_conf)
+        cg.add(var.set_lqi_text_sensor(tsens))
+
+    if pair_id_conf := config.get(CONF_PAIR_ID):
+        tsens = await text_sensor.new_text_sensor(pair_id_conf)
+        cg.add(var.set_pair_id_text_sensor(tsens))
+
+    if scan_mode_conf := config.get(CONF_SCAN_MODE):
+        tsens = await text_sensor.new_text_sensor(scan_mode_conf)
+        cg.add(var.set_scan_mode_text_sensor(tsens))

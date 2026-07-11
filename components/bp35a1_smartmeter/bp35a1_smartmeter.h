@@ -2,6 +2,7 @@
 
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
 #include "BP35A1.hpp"
 #include "UARTDeviceAdapter.h"
@@ -22,12 +23,24 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_energy_sensor(sensor::Sensor *s) { energy_sensor_ = s; }
     void set_connection_sensor(binary_sensor::BinarySensor *s) { connection_sensor_ = s; }
 
+    void set_ipv6_address_text_sensor(text_sensor::TextSensor *s) { ipv6_address_text_sensor_ = s; }
+    void set_dest_ipv6_address_text_sensor(text_sensor::TextSensor *s) { dest_ipv6_address_text_sensor_ = s; }
+    void set_mac_address_text_sensor(text_sensor::TextSensor *s) { mac_address_text_sensor_ = s; }
+    void set_mac_address_16_text_sensor(text_sensor::TextSensor *s) { mac_address_16_text_sensor_ = s; }
+    void set_channel_text_sensor(text_sensor::TextSensor *s) { channel_text_sensor_ = s; }
+    void set_pan_id_text_sensor(text_sensor::TextSensor *s) { pan_id_text_sensor_ = s; }
+    void set_lqi_text_sensor(text_sensor::TextSensor *s) { lqi_text_sensor_ = s; }
+    void set_pair_id_text_sensor(text_sensor::TextSensor *s) { pair_id_text_sensor_ = s; }
+    void set_scan_mode_text_sensor(text_sensor::TextSensor *s) { scan_mode_text_sensor_ = s; }
+
     void setup() override;
     void update() override;
     void loop() override;
     void dump_config() override;
 
   protected:
+    void publish_info_sensors_();
+
     std::string b_route_id_;
     std::string b_route_password_;
 
@@ -37,10 +50,21 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     sensor::Sensor *energy_sensor_{nullptr};
     binary_sensor::BinarySensor *connection_sensor_{nullptr};
 
+    text_sensor::TextSensor *ipv6_address_text_sensor_{nullptr};
+    text_sensor::TextSensor *dest_ipv6_address_text_sensor_{nullptr};
+    text_sensor::TextSensor *mac_address_text_sensor_{nullptr};
+    text_sensor::TextSensor *mac_address_16_text_sensor_{nullptr};
+    text_sensor::TextSensor *channel_text_sensor_{nullptr};
+    text_sensor::TextSensor *pan_id_text_sensor_{nullptr};
+    text_sensor::TextSensor *lqi_text_sensor_{nullptr};
+    text_sensor::TextSensor *pair_id_text_sensor_{nullptr};
+    text_sensor::TextSensor *scan_mode_text_sensor_{nullptr};
+
     UARTDeviceAdapter *uart_adapter_{nullptr};
     BP35A1 *bp35a1_{nullptr};
 
     uint32_t init_start_ms_{0};
+    uint32_t last_loop_ms_{0};
 };
 
 }  // namespace bp35a1_smartmeter
