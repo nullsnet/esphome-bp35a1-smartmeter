@@ -1,0 +1,70 @@
+esphome:
+  name: esp32-broute2mqtt-smartmeter
+  friendly_name: Smart Meter BP35A1
+  platformio_options:
+    lib_ldf_mode: deep
+    build_flags:
+      - -DUSE_ESP_LOG
+    lib_deps:
+      - https://github.com/nullsnet/Arduino_BP35A1_B_route.git
+      - https://github.com/nullsnet/Arduino_EchonetLite.git
+
+external_components:
+  - source:
+      type: local
+      path: ../custom_components
+    components:
+      - bp35a1_smartmeter
+
+esp32:
+  board: m5stick-c
+  framework:
+    type: arduino
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: LIGHT
+
+ota:
+  platform: esphome
+  password: !secret ota_password
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+logger:
+  level: DEBUG
+  logs:
+    bp35a1_smartmeter: DEBUG
+
+uart:
+  id: wisun_uart
+  tx_pin: GPIO0
+  rx_pin: GPIO26
+  baud_rate: 115200
+  stop_bits: 1
+  parity: NONE
+
+bp35a1_smartmeter:
+  b_route_id: !secret b_route_id
+  b_route_password: !secret b_route_password
+  power:
+    name: "Instantaneous Power"
+  current_r:
+    name: "Instantaneous Current R"
+  current_t:
+    name: "Instantaneous Current T"
+  energy:
+    name: "Cumulative Energy Positive"
+  connection:
+    name: "B-route Connection"
+
+sensor:
+
+binary_sensor:
+
+web_server:
+  port: 80

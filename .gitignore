@@ -1,0 +1,40 @@
+# Secrets
+esphome/secrets.yaml
+
+# PlatformIO
+.pio/
+.platformio/
+
+# ESPHome
+.esphome/
+**/.esphome/
+esphome/lib/
+
+# ESPHome build output
+**.pioenvs/
+
+# Cache
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.whl
+.eggs/
+venv/
+.venv/
+ENV/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
