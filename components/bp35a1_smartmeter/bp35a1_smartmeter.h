@@ -65,6 +65,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
 
     uint32_t init_start_ms_{0};
     uint32_t last_loop_ms_{0};
+    uint32_t last_pana_fail_count_{0};
 };
 
 }  // namespace bp35a1_smartmeter

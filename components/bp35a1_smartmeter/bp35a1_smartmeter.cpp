@@ -23,6 +23,21 @@ void BP35A1SmartMeterComponent::setup() {
                 ESP_LOGW(TAG, "Initialization reset");
                 if (connection_sensor_) connection_sensor_->publish_state(false);
                 break;
+            case BP35A1::InitializeState::setSKStackPassword:
+                ESP_LOGI(TAG, "Setting B-route password");
+                break;
+            case BP35A1::InitializeState::setSKStackId:
+                ESP_LOGI(TAG, "Setting B-route ID");
+                break;
+            case BP35A1::InitializeState::activeScanWithIE:
+                ESP_LOGI(TAG, "Starting Wi-SUN scan");
+                break;
+            case BP35A1::InitializeState::skJoin:
+                ESP_LOGI(TAG, "Joining B-route network");
+                break;
+            case BP35A1::InitializeState::waitPana:
+                ESP_LOGI(TAG, "Waiting for PANA authentication");
+                break;
             default:
                 break;
         }
@@ -44,6 +59,11 @@ void BP35A1SmartMeterComponent::loop() {
         } else if (now - init_start_ms_ >= 180000) {
             ESP_LOGE(TAG, "Initialization timeout (180s), restarting...");
             esp_restart();
+        }
+        const uint32_t panaFails = bp35a1_->getPanaFailCount();
+        if (panaFails > last_pana_fail_count_) {
+            ESP_LOGW(TAG, "B-route authentication failed %u time(s) - check b_route_id and b_route_password", panaFails);
+            last_pana_fail_count_ = panaFails;
         }
         bp35a1_->initializeLoop();
         return;
