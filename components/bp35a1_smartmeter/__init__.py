@@ -13,6 +13,7 @@ from esphome.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_CONNECTIVITY,
 )
 from pathlib import Path
 
@@ -95,6 +96,7 @@ CONFIG_SCHEMA = (
             ),
             cv.Optional(CONF_CONNECTION): binary_sensor.binary_sensor_schema(
                 icon=ICON_ACCOUNT,
+                device_class=DEVICE_CLASS_CONNECTIVITY,
             ).extend(
                 {
                     cv.Optional(CONF_NAME, default="B-route Connection"): cv.string,
