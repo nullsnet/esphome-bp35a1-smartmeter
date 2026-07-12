@@ -121,14 +121,14 @@ void BP35A1SmartMeterComponent::publish_info_sensors_() {
     if (mac_address_16_text_sensor_) {
         mac_address_16_text_sensor_->publish_state(bp35a1_->getMacAddress16());
     }
-    if (channel_text_sensor_) {
-        channel_text_sensor_->publish_state(bp35a1_->getChannel());
+    if (channel_sensor_) {
+        channel_sensor_->publish_state(static_cast<float>(bp35a1_->getChannel()));
     }
     if (pan_id_text_sensor_) {
         pan_id_text_sensor_->publish_state(bp35a1_->getPanId());
     }
-    if (lqi_text_sensor_) {
-        lqi_text_sensor_->publish_state(bp35a1_->getLQI());
+    if (lqi_sensor_) {
+        lqi_sensor_->publish_state(static_cast<float>(bp35a1_->getLQI()));
     }
     if (pair_id_text_sensor_) {
         pair_id_text_sensor_->publish_state(bp35a1_->getPairId());
@@ -149,9 +149,9 @@ void BP35A1SmartMeterComponent::dump_config() {
     LOG_TEXT_SENSOR("  ", "Dest IPv6 Address", dest_ipv6_address_text_sensor_);
     LOG_TEXT_SENSOR("  ", "MAC Address", mac_address_text_sensor_);
     LOG_TEXT_SENSOR("  ", "MAC Address 16", mac_address_16_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Channel", channel_text_sensor_);
+    LOG_SENSOR("  ", "Channel", channel_sensor_);
     LOG_TEXT_SENSOR("  ", "PAN ID", pan_id_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "LQI", lqi_text_sensor_);
+    LOG_SENSOR("  ", "LQI", lqi_sensor_);
     LOG_TEXT_SENSOR("  ", "Pair ID", pair_id_text_sensor_);
     LOG_TEXT_SENSOR("  ", "Scan Mode", scan_mode_text_sensor_);
 }

@@ -27,9 +27,9 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_dest_ipv6_address_text_sensor(text_sensor::TextSensor *s) { dest_ipv6_address_text_sensor_ = s; }
     void set_mac_address_text_sensor(text_sensor::TextSensor *s) { mac_address_text_sensor_ = s; }
     void set_mac_address_16_text_sensor(text_sensor::TextSensor *s) { mac_address_16_text_sensor_ = s; }
-    void set_channel_text_sensor(text_sensor::TextSensor *s) { channel_text_sensor_ = s; }
+    void set_channel_sensor(sensor::Sensor *s) { channel_sensor_ = s; }
     void set_pan_id_text_sensor(text_sensor::TextSensor *s) { pan_id_text_sensor_ = s; }
-    void set_lqi_text_sensor(text_sensor::TextSensor *s) { lqi_text_sensor_ = s; }
+    void set_lqi_sensor(sensor::Sensor *s) { lqi_sensor_ = s; }
     void set_pair_id_text_sensor(text_sensor::TextSensor *s) { pair_id_text_sensor_ = s; }
     void set_scan_mode_text_sensor(text_sensor::TextSensor *s) { scan_mode_text_sensor_ = s; }
 
@@ -54,9 +54,9 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     text_sensor::TextSensor *dest_ipv6_address_text_sensor_{nullptr};
     text_sensor::TextSensor *mac_address_text_sensor_{nullptr};
     text_sensor::TextSensor *mac_address_16_text_sensor_{nullptr};
-    text_sensor::TextSensor *channel_text_sensor_{nullptr};
+    sensor::Sensor *channel_sensor_{nullptr};
     text_sensor::TextSensor *pan_id_text_sensor_{nullptr};
-    text_sensor::TextSensor *lqi_text_sensor_{nullptr};
+    sensor::Sensor *lqi_sensor_{nullptr};
     text_sensor::TextSensor *pair_id_text_sensor_{nullptr};
     text_sensor::TextSensor *scan_mode_text_sensor_{nullptr};
 

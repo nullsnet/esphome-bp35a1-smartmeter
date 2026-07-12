@@ -134,8 +134,9 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_NAME, default="MAC Address 16"): cv.string,
                 }
             ),
-            cv.Optional(CONF_CHANNEL): text_sensor.text_sensor_schema(
+            cv.Optional(CONF_CHANNEL): sensor.sensor_schema(
                 icon="mdi:radio-tower",
+                accuracy_decimals=0,
                 entity_category="diagnostic",
             ).extend(
                 {
@@ -150,8 +151,10 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_NAME, default="PAN ID"): cv.string,
                 }
             ),
-            cv.Optional(CONF_LQI): text_sensor.text_sensor_schema(
+            cv.Optional(CONF_LQI): sensor.sensor_schema(
+                unit_of_measurement="dBm",
                 icon="mdi:signal-cellular-1",
+                accuracy_decimals=0,
                 entity_category="diagnostic",
             ).extend(
                 {
@@ -226,16 +229,16 @@ async def to_code(config):
         cg.add(var.set_mac_address_16_text_sensor(tsens))
 
     if channel_conf := config.get(CONF_CHANNEL):
-        tsens = await text_sensor.new_text_sensor(channel_conf)
-        cg.add(var.set_channel_text_sensor(tsens))
+        sens = await sensor.new_sensor(channel_conf)
+        cg.add(var.set_channel_sensor(sens))
 
     if pan_id_conf := config.get(CONF_PAN_ID):
         tsens = await text_sensor.new_text_sensor(pan_id_conf)
         cg.add(var.set_pan_id_text_sensor(tsens))
 
     if lqi_conf := config.get(CONF_LQI):
-        tsens = await text_sensor.new_text_sensor(lqi_conf)
-        cg.add(var.set_lqi_text_sensor(tsens))
+        sens = await sensor.new_sensor(lqi_conf)
+        cg.add(var.set_lqi_sensor(sens))
 
     if pair_id_conf := config.get(CONF_PAIR_ID):
         tsens = await text_sensor.new_text_sensor(pair_id_conf)
