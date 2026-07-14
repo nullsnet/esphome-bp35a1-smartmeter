@@ -152,7 +152,6 @@ CONFIG_SCHEMA = (
                 }
             ),
             cv.Optional(CONF_LQI): sensor.sensor_schema(
-                unit_of_measurement="dBm",
                 icon="mdi:signal-cellular-1",
                 accuracy_decimals=0,
                 entity_category="diagnostic",
