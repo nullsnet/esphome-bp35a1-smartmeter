@@ -83,11 +83,6 @@ void BP35A1SmartMeterComponent::loop() {
             if (meter.getInstantaneousPower(&power) &&
                 meter.getInstantaneousCurrent(&currentR, &currentT) &&
                 meter.getCumulativeEnergyPositive(&energy)) {
-                ESP_LOGI(TAG, "Power  : %d W", power);
-                ESP_LOGI(TAG, "Energy : %.3f kWh", energy);
-                ESP_LOGI(TAG, "Current R: %.1f A", currentR);
-                ESP_LOGI(TAG, "Current T: %.1f A", currentT);
-
                 if (power_sensor_) power_sensor_->publish_state(static_cast<float>(power));
                 if (current_r_sensor_) current_r_sensor_->publish_state(currentR);
                 if (current_t_sensor_) current_t_sensor_->publish_state(currentT);
