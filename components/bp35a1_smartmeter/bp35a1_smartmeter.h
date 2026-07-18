@@ -16,6 +16,9 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
 
     void set_b_route_id(const std::string &id) { b_route_id_ = id; }
     void set_b_route_password(const std::string &password) { b_route_password_ = password; }
+    void set_init_timeout(uint32_t ms) { init_timeout_ms_ = ms; }
+    void set_loop_interval(uint32_t ms) { loop_interval_ms_ = ms; }
+    void set_scan_channel_mask(uint32_t mask) { scan_channel_mask_ = mask; }
 
     void set_power_sensor(sensor::Sensor *s) { power_sensor_ = s; }
     void set_current_r_sensor(sensor::Sensor *s) { current_r_sensor_ = s; }
@@ -66,6 +69,9 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     uint32_t init_start_ms_{0};
     uint32_t last_loop_ms_{0};
     uint32_t last_pana_fail_count_{0};
+    uint32_t init_timeout_ms_{180000};
+    uint32_t loop_interval_ms_{100};
+    uint32_t scan_channel_mask_{0xFFFFFFFF};
 };
 
 }  // namespace bp35a1_smartmeter

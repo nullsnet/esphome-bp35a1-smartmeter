@@ -38,6 +38,8 @@ Do NOT copy library files into `components/`. PlatformIO handles them automatica
 | `current_r` | A | R-phase current |
 | `current_t` | A | T-phase current |
 | `energy` | kWh | Cumulative energy (positive) |
+| `channel` | — | Wi-SUN channel (diagnostic) |
+| `lqi` | — | Link Quality Indicator (diagnostic) |
 
 ### Binary sensors
 
@@ -53,9 +55,7 @@ Do NOT copy library files into `components/`. PlatformIO handles them automatica
 | `dest_ipv6_address` | Smart meter IPv6 address (from SK CONVERTMAC2IPV6) |
 | `mac_address` | BP35A1 64-bit MAC address |
 | `mac_address_16` | 16-bit address (FFE = not assigned) |
-| `channel` | Wi-SUN channel |
 | `pan_id` | Wi-SUN PAN ID |
-| `lqi` | Link Quality Indicator |
 | `pair_id` | Pairing ID |
 | `scan_mode` | Scan mode string |
 
@@ -63,10 +63,18 @@ Do NOT copy library files into `components/`. PlatformIO handles them automatica
 
 The C++ class inherits `PollingComponent` + `uart::UARTDevice`.
 
-- `setup()` — creates `UARTDeviceAdapter` and `BP35A1` instance, registers init/communication callbacks
-- `loop()` — 100ms throttled; runs `initializeLoop()` until readySmartMeter, then runs `communicationLoop()` to continuously receive meter data; restarts ESP after 180s init timeout
+- `setup()` — creates `UARTDeviceAdapter` and `BP35A1` instance, registers init/communication callbacks; sets `scanChannelMask` from config
+- `loop()` — 100ms throttled; runs `initializeLoop()` until readySmartMeter, then runs `communicationLoop()` to continuously receive meter data; restarts ESP after init timeout (configurable)
 - `update()` — called at `update_interval` (default 10s); sends property requests (power, current, energy)
 - `publish_info_sensors_()` — publishes text sensors once when initialization completes
+
+### Configurable Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `init_timeout` | `180s` | Wi-SUN initialization timeout |
+| `loop_interval` | `100ms` | State machine loop interval |
+| `scan_channel_mask` | `0xFFFFFFFF` | Wi-SUN scan channel bitmask |
 
 Library callbacks use `std::function` with `[this]` capture. Headers included via PlatformIO LDF (`lib_ldf_mode: deep`).
 

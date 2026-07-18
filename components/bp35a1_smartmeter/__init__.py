@@ -29,6 +29,8 @@ BP35A1SmartMeterComponent = bp35a1_smartmeter_ns.class_(
 
 CONF_B_ROUTE_ID = "b_route_id"
 CONF_B_ROUTE_PASSWORD = "b_route_password"
+CONF_INIT_TIMEOUT = "init_timeout"
+CONF_LOOP_INTERVAL = "loop_interval"
 CONF_POWER = "power"
 CONF_CURRENT_R = "current_r"
 CONF_CURRENT_T = "current_t"
@@ -43,6 +45,7 @@ CONF_PAN_ID = "pan_id"
 CONF_LQI = "lqi"
 CONF_PAIR_ID = "pair_id"
 CONF_SCAN_MODE = "scan_mode"
+CONF_SCAN_CHANNEL_MASK = "scan_channel_mask"
 
 CONFIG_SCHEMA = (
     cv.Schema(
@@ -50,6 +53,9 @@ CONFIG_SCHEMA = (
             cv.GenerateID(): cv.declare_id(BP35A1SmartMeterComponent),
             cv.Required(CONF_B_ROUTE_ID): cv.string_strict,
             cv.Required(CONF_B_ROUTE_PASSWORD): cv.string_strict,
+            cv.Optional(CONF_INIT_TIMEOUT, default="180s"): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_LOOP_INTERVAL, default="100ms"): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_SCAN_CHANNEL_MASK, default=0xFFFFFFFF): cv.hex_uint32_t,
             cv.Optional(CONF_POWER): sensor.sensor_schema(
                 unit_of_measurement=UNIT_WATT,
                 icon=ICON_FLASH,
@@ -194,6 +200,9 @@ async def to_code(config):
 
     cg.add(var.set_b_route_id(config[CONF_B_ROUTE_ID]))
     cg.add(var.set_b_route_password(config[CONF_B_ROUTE_PASSWORD]))
+    cg.add(var.set_init_timeout(config[CONF_INIT_TIMEOUT]))
+    cg.add(var.set_loop_interval(config[CONF_LOOP_INTERVAL]))
+    cg.add(var.set_scan_channel_mask(config[CONF_SCAN_CHANNEL_MASK]))
 
     if power_conf := config.get(CONF_POWER):
         sens = await sensor.new_sensor(power_conf)

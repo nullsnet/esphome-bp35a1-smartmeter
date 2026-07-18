@@ -8,9 +8,11 @@ static const char *const TAG = "bp35a1_smartmeter";
 void BP35A1SmartMeterComponent::setup() {
     ESP_LOGI(TAG, "BP35A1 Smart Meter Component initialized");
     ESP_LOGD(TAG, "B-route ID: %s", b_route_id_.c_str());
+    ESP_LOGD(TAG, "Scan channel mask: 0x%08X", scan_channel_mask_);
 
     uart_adapter_ = new UARTDeviceAdapter(*this);
     bp35a1_ = new BP35A1(b_route_id_, b_route_password_, *uart_adapter_);
+    bp35a1_->setScanChannelMask(scan_channel_mask_);
 
     bp35a1_->setStatusChangeCallback([this](BP35A1::InitializeState state) {
         switch (state) {
@@ -50,19 +52,19 @@ void BP35A1SmartMeterComponent::loop() {
     if (!bp35a1_) return;
 
     const uint32_t now = millis();
-    if (now - last_loop_ms_ < 100) return;
+    if (now - last_loop_ms_ < loop_interval_ms_) return;
     last_loop_ms_ = now;
 
     if (bp35a1_->getInitializeState() != BP35A1::InitializeState::readySmartMeter) {
         if (init_start_ms_ == 0) {
             init_start_ms_ = now;
             ESP_LOGD(TAG, "Init started, state=%u", (uint8_t)bp35a1_->getInitializeState());
-        } else if (now - init_start_ms_ >= 180000) {
-            ESP_LOGE(TAG, "Initialization timeout (180s), restarting...");
+        } else if (now - init_start_ms_ >= init_timeout_ms_) {
+            ESP_LOGE(TAG, "Initialization timeout (%us), restarting...", init_timeout_ms_ / 1000);
             esp_restart();
         } else {
             const uint32_t elapsed = (now - init_start_ms_) / 1000;
-            ESP_LOGD(TAG, "Init progress: %us / 180s, state=%u", elapsed, (uint8_t)bp35a1_->getInitializeState());
+            ESP_LOGD(TAG, "Init progress: %us / %us, state=%u", elapsed, init_timeout_ms_ / 1000, (uint8_t)bp35a1_->getInitializeState());
         }
         const uint32_t panaFails = bp35a1_->getPanaFailCount();
         if (panaFails > last_pana_fail_count_) {

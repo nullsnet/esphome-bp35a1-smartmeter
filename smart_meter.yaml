@@ -54,6 +54,9 @@ uart:
 
 bp35a1_smartmeter:
   update_interval: 10s
+  init_timeout: 180s
+  loop_interval: 100ms
+  scan_channel_mask: 0xFFFFFFFF
   b_route_id: !secret b_route_id
   b_route_password: !secret b_route_password
   power:
@@ -90,6 +93,3 @@ sensor:
 binary_sensor:
 
 text_sensor:
-
-web_server:
-  port: 80
