@@ -56,9 +56,13 @@ void BP35A1SmartMeterComponent::loop() {
     if (bp35a1_->getInitializeState() != BP35A1::InitializeState::readySmartMeter) {
         if (init_start_ms_ == 0) {
             init_start_ms_ = now;
+            ESP_LOGD(TAG, "Init started, state=%u", (uint8_t)bp35a1_->getInitializeState());
         } else if (now - init_start_ms_ >= 180000) {
             ESP_LOGE(TAG, "Initialization timeout (180s), restarting...");
             esp_restart();
+        } else {
+            const uint32_t elapsed = (now - init_start_ms_) / 1000;
+            ESP_LOGD(TAG, "Init progress: %us / 180s, state=%u", elapsed, (uint8_t)bp35a1_->getInitializeState());
         }
         const uint32_t panaFails = bp35a1_->getPanaFailCount();
         if (panaFails > last_pana_fail_count_) {
@@ -122,13 +126,13 @@ void BP35A1SmartMeterComponent::publish_info_sensors_() {
         mac_address_16_text_sensor_->publish_state(bp35a1_->getMacAddress16());
     }
     if (channel_sensor_) {
-        channel_sensor_->publish_state(static_cast<float>(bp35a1_->getChannel()));
+        channel_sensor_->publish_state(static_cast<float>(bp35a1_->getChannelNumeric()));
     }
     if (pan_id_text_sensor_) {
         pan_id_text_sensor_->publish_state(bp35a1_->getPanId());
     }
     if (lqi_sensor_) {
-        lqi_sensor_->publish_state(static_cast<float>(bp35a1_->getLQI()));
+        lqi_sensor_->publish_state(static_cast<float>(bp35a1_->getLQINumeric()));
     }
     if (pair_id_text_sensor_) {
         pair_id_text_sensor_->publish_state(bp35a1_->getPairId());

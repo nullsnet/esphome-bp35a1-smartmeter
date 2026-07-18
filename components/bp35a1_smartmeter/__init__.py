@@ -135,8 +135,10 @@ CONFIG_SCHEMA = (
                 }
             ),
             cv.Optional(CONF_CHANNEL): sensor.sensor_schema(
+                unit_of_measurement="",
                 icon="mdi:radio-tower",
                 accuracy_decimals=0,
+                state_class=STATE_CLASS_MEASUREMENT,
                 entity_category="diagnostic",
             ).extend(
                 {
@@ -152,8 +154,10 @@ CONFIG_SCHEMA = (
                 }
             ),
             cv.Optional(CONF_LQI): sensor.sensor_schema(
+                unit_of_measurement="",
                 icon="mdi:signal-cellular-1",
                 accuracy_decimals=0,
+                state_class=STATE_CLASS_MEASUREMENT,
                 entity_category="diagnostic",
             ).extend(
                 {
