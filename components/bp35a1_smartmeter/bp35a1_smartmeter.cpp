@@ -5,6 +5,16 @@ namespace bp35a1_smartmeter {
 
 static const char *const TAG = "bp35a1_smartmeter";
 
+static std::string bytes_to_hex(const std::vector<uint8_t> &bytes) {
+    std::string hex = "0x";
+    for (const uint8_t &b : bytes) {
+        char buf[4];
+        snprintf(buf, sizeof(buf), "%02X", b);
+        hex += buf;
+    }
+    return hex;
+}
+
 void BP35A1SmartMeterComponent::setup() {
     ESP_LOGI(TAG, "BP35A1 Smart Meter Component initialized");
     ESP_LOGD(TAG, "B-route ID: %s", b_route_id_.c_str());
@@ -92,9 +102,26 @@ void BP35A1SmartMeterComponent::loop() {
             if (meter.getCumulativeEnergyNegative(&energyReverse)) {
                 if (energy_reverse_sensor_) energy_reverse_sensor_->publish_state(energyReverse);
             }
+
+            if (info_request_sent_ && !info_sensors_published_) {
+                publish_meter_info_sensors_(meter);
+                info_sensors_published_ = true;
+                ESP_LOGI(TAG, "Meter info sensors published");
+            }
         },
         BP35A1::CommunicationState::ready
     );
+
+    if (!info_request_sent_) {
+        ESP_LOGI(TAG, "Requesting meter info properties...");
+        bp35a1_->sendPropertyRequest({
+            EchonetLite::Property::InstallationLocation,
+            EchonetLite::Property::StandardVersionInformation,
+            EchonetLite::Property::ManufacturerCode,
+            EchonetLite::Property::GetPropertyMap,
+        });
+        info_request_sent_ = true;
+    }
 }
 
 void BP35A1SmartMeterComponent::update() {
@@ -144,6 +171,40 @@ void BP35A1SmartMeterComponent::publish_info_sensors_() {
     }
 }
 
+void BP35A1SmartMeterComponent::publish_meter_info_sensors_(const LowVoltageSmartElectricEnergyMeterClass &meter) {
+    ESP_LOGI(TAG, "Publishing meter info sensors");
+
+    if (installation_location_text_sensor_) {
+        std::vector<uint8_t> location;
+        if (meter.getInstallationLocation(&location)) {
+            installation_location_text_sensor_->publish_state(bytes_to_hex(location));
+        }
+    }
+
+    if (standard_version_information_text_sensor_) {
+        uint32_t version;
+        if (meter.getStandardVersionInformation(&version)) {
+            char buf[12];
+            snprintf(buf, sizeof(buf), "0x%08X", version);
+            standard_version_information_text_sensor_->publish_state(buf);
+        }
+    }
+
+    if (manufacturer_code_text_sensor_) {
+        std::vector<uint8_t> code;
+        if (meter.getManufacturerCode(&code)) {
+            manufacturer_code_text_sensor_->publish_state(bytes_to_hex(code));
+        }
+    }
+
+    if (get_property_map_text_sensor_) {
+        std::vector<uint8_t> map;
+        if (meter.getPropertyMap(&map)) {
+            get_property_map_text_sensor_->publish_state(bytes_to_hex(map));
+        }
+    }
+}
+
 void BP35A1SmartMeterComponent::dump_config() {
     ESP_LOGCONFIG(TAG, "BP35A1 Smart Meter");
     LOG_SENSOR("  ", "Power", power_sensor_);
@@ -161,6 +222,10 @@ void BP35A1SmartMeterComponent::dump_config() {
     LOG_SENSOR("  ", "LQI", lqi_sensor_);
     LOG_TEXT_SENSOR("  ", "Pair ID", pair_id_text_sensor_);
     LOG_TEXT_SENSOR("  ", "Scan Mode", scan_mode_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Installation Location", installation_location_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Standard Version Information", standard_version_information_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Manufacturer Code", manufacturer_code_text_sensor_);
+    LOG_TEXT_SENSOR("  ", "Get Property Map", get_property_map_text_sensor_);
 }
 
 }  // namespace bp35a1_smartmeter

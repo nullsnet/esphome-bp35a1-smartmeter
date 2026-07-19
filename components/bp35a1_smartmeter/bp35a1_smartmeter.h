@@ -36,6 +36,10 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_lqi_sensor(sensor::Sensor *s) { lqi_sensor_ = s; }
     void set_pair_id_text_sensor(text_sensor::TextSensor *s) { pair_id_text_sensor_ = s; }
     void set_scan_mode_text_sensor(text_sensor::TextSensor *s) { scan_mode_text_sensor_ = s; }
+    void set_installation_location_text_sensor(text_sensor::TextSensor *s) { installation_location_text_sensor_ = s; }
+    void set_standard_version_information_text_sensor(text_sensor::TextSensor *s) { standard_version_information_text_sensor_ = s; }
+    void set_manufacturer_code_text_sensor(text_sensor::TextSensor *s) { manufacturer_code_text_sensor_ = s; }
+    void set_get_property_map_text_sensor(text_sensor::TextSensor *s) { get_property_map_text_sensor_ = s; }
 
     void setup() override;
     void update() override;
@@ -44,6 +48,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
 
   protected:
     void publish_info_sensors_();
+    void publish_meter_info_sensors_(const LowVoltageSmartElectricEnergyMeterClass &meter);
 
     std::string b_route_id_;
     std::string b_route_password_;
@@ -64,6 +69,10 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     sensor::Sensor *lqi_sensor_{nullptr};
     text_sensor::TextSensor *pair_id_text_sensor_{nullptr};
     text_sensor::TextSensor *scan_mode_text_sensor_{nullptr};
+    text_sensor::TextSensor *installation_location_text_sensor_{nullptr};
+    text_sensor::TextSensor *standard_version_information_text_sensor_{nullptr};
+    text_sensor::TextSensor *manufacturer_code_text_sensor_{nullptr};
+    text_sensor::TextSensor *get_property_map_text_sensor_{nullptr};
 
     UARTDeviceAdapter *uart_adapter_{nullptr};
     BP35A1 *bp35a1_{nullptr};
@@ -74,6 +83,8 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     uint32_t init_timeout_ms_{180000};
     uint32_t loop_interval_ms_{100};
     uint32_t scan_channel_mask_{0xFFFFFFFF};
+    bool info_request_sent_{false};
+    bool info_sensors_published_{false};
 };
 
 }  // namespace bp35a1_smartmeter

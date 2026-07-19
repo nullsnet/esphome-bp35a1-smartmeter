@@ -48,6 +48,10 @@ CONF_LQI = "lqi"
 CONF_PAIR_ID = "pair_id"
 CONF_SCAN_MODE = "scan_mode"
 CONF_SCAN_CHANNEL_MASK = "scan_channel_mask"
+CONF_INSTALLATION_LOCATION = "installation_location"
+CONF_STANDARD_VERSION_INFORMATION = "standard_version_information"
+CONF_MANUFACTURER_CODE = "manufacturer_code"
+CONF_GET_PROPERTY_MAP = "get_property_map"
 
 CONFIG_SCHEMA = (
     cv.Schema(
@@ -199,6 +203,38 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_NAME, default="Scan Mode"): cv.string,
                 }
             ),
+            cv.Optional(CONF_INSTALLATION_LOCATION): text_sensor.text_sensor_schema(
+                icon="mdi:map-marker",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Installation Location"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_STANDARD_VERSION_INFORMATION): text_sensor.text_sensor_schema(
+                icon="mdi:information",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Standard Version Information"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_MANUFACTURER_CODE): text_sensor.text_sensor_schema(
+                icon="mdi:factory",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Manufacturer Code"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_GET_PROPERTY_MAP): text_sensor.text_sensor_schema(
+                icon="mdi:map",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Get Property Map"): cv.string,
+                }
+            ),
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -276,3 +312,19 @@ async def to_code(config):
     if scan_mode_conf := config.get(CONF_SCAN_MODE):
         tsens = await text_sensor.new_text_sensor(scan_mode_conf)
         cg.add(var.set_scan_mode_text_sensor(tsens))
+
+    if installation_location_conf := config.get(CONF_INSTALLATION_LOCATION):
+        tsens = await text_sensor.new_text_sensor(installation_location_conf)
+        cg.add(var.set_installation_location_text_sensor(tsens))
+
+    if standard_version_information_conf := config.get(CONF_STANDARD_VERSION_INFORMATION):
+        tsens = await text_sensor.new_text_sensor(standard_version_information_conf)
+        cg.add(var.set_standard_version_information_text_sensor(tsens))
+
+    if manufacturer_code_conf := config.get(CONF_MANUFACTURER_CODE):
+        tsens = await text_sensor.new_text_sensor(manufacturer_code_conf)
+        cg.add(var.set_manufacturer_code_text_sensor(tsens))
+
+    if get_property_map_conf := config.get(CONF_GET_PROPERTY_MAP):
+        tsens = await text_sensor.new_text_sensor(get_property_map_conf)
+        cg.add(var.set_get_property_map_text_sensor(tsens))

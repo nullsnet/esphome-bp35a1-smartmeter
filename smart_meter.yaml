@@ -89,6 +89,14 @@ bp35a1_smartmeter:
     name: "Wi-SUN Pair ID"
   scan_mode:
     name: "Wi-SUN Scan Mode"
+  installation_location:
+    name: "Installation Location"
+  standard_version_information:
+    name: "Standard Version Information"
+  manufacturer_code:
+    name: "Manufacturer Code"
+  get_property_map:
+    name: "Get Property Map"
 
 sensor:
 
