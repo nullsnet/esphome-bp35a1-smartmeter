@@ -13,6 +13,7 @@ from esphome.const import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_VOLTAGE,
     DEVICE_CLASS_CONNECTIVITY,
 )
 from pathlib import Path
@@ -35,6 +36,7 @@ CONF_POWER = "power"
 CONF_CURRENT_R = "current_r"
 CONF_CURRENT_T = "current_t"
 CONF_ENERGY = "energy"
+CONF_ENERGY_REVERSE = "energy_reverse"
 CONF_CONNECTION = "connection"
 CONF_IPV6_ADDRESS = "ipv6_address"
 CONF_DEST_IPV6_ADDRESS = "dest_ipv6_address"
@@ -98,6 +100,17 @@ CONFIG_SCHEMA = (
             ).extend(
                 {
                     cv.Optional(CONF_NAME, default="Cumulative Energy Positive"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_ENERGY_REVERSE): sensor.sensor_schema(
+                unit_of_measurement=UNIT_KILOWATT_HOURS,
+                icon="mdi:flash",
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_ENERGY,
+                state_class="total_increasing",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Cumulative Energy Negative"): cv.string,
                 }
             ),
             cv.Optional(CONF_CONNECTION): binary_sensor.binary_sensor_schema(
@@ -219,6 +232,10 @@ async def to_code(config):
     if energy_conf := config.get(CONF_ENERGY):
         sens = await sensor.new_sensor(energy_conf)
         cg.add(var.set_energy_sensor(sens))
+
+    if energy_reverse_conf := config.get(CONF_ENERGY_REVERSE):
+        sens = await sensor.new_sensor(energy_reverse_conf)
+        cg.add(var.set_energy_reverse_sensor(sens))
 
     if connection_conf := config.get(CONF_CONNECTION):
         bsens = await binary_sensor.new_binary_sensor(connection_conf)

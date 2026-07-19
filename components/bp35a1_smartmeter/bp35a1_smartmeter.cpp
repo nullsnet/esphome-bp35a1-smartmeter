@@ -79,6 +79,7 @@ void BP35A1SmartMeterComponent::loop() {
         [this](const LowVoltageSmartElectricEnergyMeterClass &meter) {
             int32_t power;
             float currentR, currentT, energy;
+            float energyReverse;
 
             if (meter.getInstantaneousPower(&power) &&
                 meter.getInstantaneousCurrent(&currentR, &currentT) &&
@@ -87,6 +88,9 @@ void BP35A1SmartMeterComponent::loop() {
                 if (current_r_sensor_) current_r_sensor_->publish_state(currentR);
                 if (current_t_sensor_) current_t_sensor_->publish_state(currentT);
                 if (energy_sensor_) energy_sensor_->publish_state(energy);
+            }
+            if (meter.getCumulativeEnergyNegative(&energyReverse)) {
+                if (energy_reverse_sensor_) energy_reverse_sensor_->publish_state(energyReverse);
             }
         },
         BP35A1::CommunicationState::ready
@@ -104,6 +108,7 @@ void BP35A1SmartMeterComponent::update() {
         LowVoltageSmartElectricEnergyMeterClass::Property::InstantaneousPower,
         LowVoltageSmartElectricEnergyMeterClass::Property::InstantaneousCurrents,
         LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyPositive,
+        LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyNegative,
     });
 }
 
@@ -145,6 +150,7 @@ void BP35A1SmartMeterComponent::dump_config() {
     LOG_SENSOR("  ", "Current R", current_r_sensor_);
     LOG_SENSOR("  ", "Current T", current_t_sensor_);
     LOG_SENSOR("  ", "Energy", energy_sensor_);
+    LOG_SENSOR("  ", "Energy Reverse", energy_reverse_sensor_);
     LOG_BINARY_SENSOR("  ", "Connection", connection_sensor_);
     LOG_TEXT_SENSOR("  ", "IPv6 Address", ipv6_address_text_sensor_);
     LOG_TEXT_SENSOR("  ", "Dest IPv6 Address", dest_ipv6_address_text_sensor_);

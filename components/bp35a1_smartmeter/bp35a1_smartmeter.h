@@ -24,6 +24,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_current_r_sensor(sensor::Sensor *s) { current_r_sensor_ = s; }
     void set_current_t_sensor(sensor::Sensor *s) { current_t_sensor_ = s; }
     void set_energy_sensor(sensor::Sensor *s) { energy_sensor_ = s; }
+    void set_energy_reverse_sensor(sensor::Sensor *s) { energy_reverse_sensor_ = s; }
     void set_connection_sensor(binary_sensor::BinarySensor *s) { connection_sensor_ = s; }
 
     void set_ipv6_address_text_sensor(text_sensor::TextSensor *s) { ipv6_address_text_sensor_ = s; }
@@ -51,6 +52,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     sensor::Sensor *current_r_sensor_{nullptr};
     sensor::Sensor *current_t_sensor_{nullptr};
     sensor::Sensor *energy_sensor_{nullptr};
+    sensor::Sensor *energy_reverse_sensor_{nullptr};
     binary_sensor::BinarySensor *connection_sensor_{nullptr};
 
     text_sensor::TextSensor *ipv6_address_text_sensor_{nullptr};

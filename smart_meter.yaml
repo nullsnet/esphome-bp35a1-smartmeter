@@ -67,6 +67,8 @@ bp35a1_smartmeter:
     name: "Instantaneous Current T"
   energy:
     name: "Cumulative Energy Positive"
+  energy_reverse:
+    name: "Cumulative Energy Negative"
   connection:
     name: "B-route Connection"
   ipv6_address:
