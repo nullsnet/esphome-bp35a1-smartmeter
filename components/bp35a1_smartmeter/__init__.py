@@ -48,10 +48,27 @@ CONF_LQI = "lqi"
 CONF_PAIR_ID = "pair_id"
 CONF_SCAN_MODE = "scan_mode"
 CONF_SCAN_CHANNEL_MASK = "scan_channel_mask"
+CONF_INFO_BATCH_DELAY = "info_batch_delay"
 CONF_INSTALLATION_LOCATION = "installation_location"
 CONF_STANDARD_VERSION_INFORMATION = "standard_version_information"
 CONF_MANUFACTURER_CODE = "manufacturer_code"
+CONF_PRODUCTION_NUMBER = "production_number"
 CONF_GET_PROPERTY_MAP = "get_property_map"
+CONF_OPERATION_STATUS = "operation_status"
+CONF_FAULT_STATUS = "fault_status"
+CONF_CURRENT_TIME_SETTING = "current_time_setting"
+CONF_CURRENT_DATE_SETTING = "current_date_setting"
+CONF_STATUS_CHANGE_ANNOUNCEMENT_PROPERTY_MAP = "status_change_announcement_property_map"
+CONF_COEFFICIENT = "coefficient"
+CONF_CUMULATIVE_ENERGY_EFFECTIVE_DIGITS = "cumulative_energy_effective_digits"
+CONF_CUMULATIVE_ENERGY_UNIT = "cumulative_energy_unit"
+CONF_CUMULATIVE_ENERGY_HISTORY_POSITIVE = "cumulative_energy_history_positive"
+CONF_CUMULATIVE_ENERGY_HISTORY_NEGATIVE = "cumulative_energy_history_negative"
+CONF_DATE_OF_COLLECT_CUMULATIVE_ENERGY_HISTORY = "date_of_collect_cumulative_energy_history"
+CONF_FIXED_CUMULATIVE_ENERGY_POSITIVE = "fixed_cumulative_energy_positive"
+CONF_FIXED_CUMULATIVE_ENERGY_NEGATIVE = "fixed_cumulative_energy_negative"
+CONF_CUMULATIVE_ENERGY_HISTORY2 = "cumulative_energy_history2"
+CONF_DATE_OF_COLLECT_CUMULATIVE_ENERGY_HISTORY2 = "date_of_collect_cumulative_energy_history2"
 
 CONFIG_SCHEMA = (
     cv.Schema(
@@ -62,6 +79,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_INIT_TIMEOUT, default="180s"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_LOOP_INTERVAL, default="100ms"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_SCAN_CHANNEL_MASK, default=0xFFFFFFFF): cv.hex_uint32_t,
+            cv.Optional(CONF_INFO_BATCH_DELAY, default="500ms"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_POWER): sensor.sensor_schema(
                 unit_of_measurement=UNIT_WATT,
                 icon=ICON_FLASH,
@@ -227,12 +245,140 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_NAME, default="Manufacturer Code"): cv.string,
                 }
             ),
+            cv.Optional(CONF_PRODUCTION_NUMBER): text_sensor.text_sensor_schema(
+                icon="mdi:numeric",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Production Number"): cv.string,
+                }
+            ),
             cv.Optional(CONF_GET_PROPERTY_MAP): text_sensor.text_sensor_schema(
                 icon="mdi:map",
                 entity_category="diagnostic",
             ).extend(
                 {
                     cv.Optional(CONF_NAME, default="Get Property Map"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_OPERATION_STATUS): text_sensor.text_sensor_schema(
+                icon="mdi:power",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Operation Status"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_FAULT_STATUS): text_sensor.text_sensor_schema(
+                icon="mdi:alert",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Fault Status"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CURRENT_TIME_SETTING): text_sensor.text_sensor_schema(
+                icon="mdi:clock",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Current Time Setting"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CURRENT_DATE_SETTING): text_sensor.text_sensor_schema(
+                icon="mdi:calendar",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Current Date Setting"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_STATUS_CHANGE_ANNOUNCEMENT_PROPERTY_MAP): text_sensor.text_sensor_schema(
+                icon="mdi:map-legend",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Status Change Announcement Property Map"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_COEFFICIENT): text_sensor.text_sensor_schema(
+                icon="mdi:multiplication",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Coefficient"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CUMULATIVE_ENERGY_EFFECTIVE_DIGITS): text_sensor.text_sensor_schema(
+                icon="mdi:alpha-k",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Cumulative Energy Effective Digits"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CUMULATIVE_ENERGY_UNIT): text_sensor.text_sensor_schema(
+                icon="mdi:alpha-k",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Cumulative Energy Unit"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CUMULATIVE_ENERGY_HISTORY_POSITIVE): text_sensor.text_sensor_schema(
+                icon="mdi:history",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Cumulative Energy History Positive"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CUMULATIVE_ENERGY_HISTORY_NEGATIVE): text_sensor.text_sensor_schema(
+                icon="mdi:history",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Cumulative Energy History Negative"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_DATE_OF_COLLECT_CUMULATIVE_ENERGY_HISTORY): text_sensor.text_sensor_schema(
+                icon="mdi:calendar-clock",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Date of Collect Cumulative Energy History"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_FIXED_CUMULATIVE_ENERGY_POSITIVE): text_sensor.text_sensor_schema(
+                icon="mdi:flash",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Fixed Cumulative Energy Positive"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_FIXED_CUMULATIVE_ENERGY_NEGATIVE): text_sensor.text_sensor_schema(
+                icon="mdi:flash",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Fixed Cumulative Energy Negative"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_CUMULATIVE_ENERGY_HISTORY2): text_sensor.text_sensor_schema(
+                icon="mdi:history",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Cumulative Energy History2"): cv.string,
+                }
+            ),
+            cv.Optional(CONF_DATE_OF_COLLECT_CUMULATIVE_ENERGY_HISTORY2): text_sensor.text_sensor_schema(
+                icon="mdi:calendar-clock",
+                entity_category="diagnostic",
+            ).extend(
+                {
+                    cv.Optional(CONF_NAME, default="Date of Collect Cumulative Energy History2"): cv.string,
                 }
             ),
         }
@@ -252,6 +398,7 @@ async def to_code(config):
     cg.add(var.set_init_timeout(config[CONF_INIT_TIMEOUT]))
     cg.add(var.set_loop_interval(config[CONF_LOOP_INTERVAL]))
     cg.add(var.set_scan_channel_mask(config[CONF_SCAN_CHANNEL_MASK]))
+    cg.add(var.set_info_batch_delay(config[CONF_INFO_BATCH_DELAY]))
 
     if power_conf := config.get(CONF_POWER):
         sens = await sensor.new_sensor(power_conf)
@@ -325,6 +472,70 @@ async def to_code(config):
         tsens = await text_sensor.new_text_sensor(manufacturer_code_conf)
         cg.add(var.set_manufacturer_code_text_sensor(tsens))
 
+    if production_number_conf := config.get(CONF_PRODUCTION_NUMBER):
+        tsens = await text_sensor.new_text_sensor(production_number_conf)
+        cg.add(var.set_production_number_text_sensor(tsens))
+
     if get_property_map_conf := config.get(CONF_GET_PROPERTY_MAP):
         tsens = await text_sensor.new_text_sensor(get_property_map_conf)
         cg.add(var.set_get_property_map_text_sensor(tsens))
+
+    if operation_status_conf := config.get(CONF_OPERATION_STATUS):
+        tsens = await text_sensor.new_text_sensor(operation_status_conf)
+        cg.add(var.set_operation_status_text_sensor(tsens))
+
+    if fault_status_conf := config.get(CONF_FAULT_STATUS):
+        tsens = await text_sensor.new_text_sensor(fault_status_conf)
+        cg.add(var.set_fault_status_text_sensor(tsens))
+
+    if current_time_setting_conf := config.get(CONF_CURRENT_TIME_SETTING):
+        tsens = await text_sensor.new_text_sensor(current_time_setting_conf)
+        cg.add(var.set_current_time_setting_text_sensor(tsens))
+
+    if current_date_setting_conf := config.get(CONF_CURRENT_DATE_SETTING):
+        tsens = await text_sensor.new_text_sensor(current_date_setting_conf)
+        cg.add(var.set_current_date_setting_text_sensor(tsens))
+
+    if status_change_announcement_property_map_conf := config.get(CONF_STATUS_CHANGE_ANNOUNCEMENT_PROPERTY_MAP):
+        tsens = await text_sensor.new_text_sensor(status_change_announcement_property_map_conf)
+        cg.add(var.set_status_change_announcement_property_map_text_sensor(tsens))
+
+    if coefficient_conf := config.get(CONF_COEFFICIENT):
+        tsens = await text_sensor.new_text_sensor(coefficient_conf)
+        cg.add(var.set_coefficient_text_sensor(tsens))
+
+    if cumulative_energy_effective_digits_conf := config.get(CONF_CUMULATIVE_ENERGY_EFFECTIVE_DIGITS):
+        tsens = await text_sensor.new_text_sensor(cumulative_energy_effective_digits_conf)
+        cg.add(var.set_cumulative_energy_effective_digits_text_sensor(tsens))
+
+    if cumulative_energy_unit_conf := config.get(CONF_CUMULATIVE_ENERGY_UNIT):
+        tsens = await text_sensor.new_text_sensor(cumulative_energy_unit_conf)
+        cg.add(var.set_cumulative_energy_unit_text_sensor(tsens))
+
+    if cumulative_energy_history_positive_conf := config.get(CONF_CUMULATIVE_ENERGY_HISTORY_POSITIVE):
+        tsens = await text_sensor.new_text_sensor(cumulative_energy_history_positive_conf)
+        cg.add(var.set_cumulative_energy_history_positive_text_sensor(tsens))
+
+    if cumulative_energy_history_negative_conf := config.get(CONF_CUMULATIVE_ENERGY_HISTORY_NEGATIVE):
+        tsens = await text_sensor.new_text_sensor(cumulative_energy_history_negative_conf)
+        cg.add(var.set_cumulative_energy_history_negative_text_sensor(tsens))
+
+    if date_of_collect_cumulative_energy_history_conf := config.get(CONF_DATE_OF_COLLECT_CUMULATIVE_ENERGY_HISTORY):
+        tsens = await text_sensor.new_text_sensor(date_of_collect_cumulative_energy_history_conf)
+        cg.add(var.set_date_of_collect_cumulative_energy_history_text_sensor(tsens))
+
+    if fixed_cumulative_energy_positive_conf := config.get(CONF_FIXED_CUMULATIVE_ENERGY_POSITIVE):
+        tsens = await text_sensor.new_text_sensor(fixed_cumulative_energy_positive_conf)
+        cg.add(var.set_fixed_cumulative_energy_positive_text_sensor(tsens))
+
+    if fixed_cumulative_energy_negative_conf := config.get(CONF_FIXED_CUMULATIVE_ENERGY_NEGATIVE):
+        tsens = await text_sensor.new_text_sensor(fixed_cumulative_energy_negative_conf)
+        cg.add(var.set_fixed_cumulative_energy_negative_text_sensor(tsens))
+
+    if cumulative_energy_history2_conf := config.get(CONF_CUMULATIVE_ENERGY_HISTORY2):
+        tsens = await text_sensor.new_text_sensor(cumulative_energy_history2_conf)
+        cg.add(var.set_cumulative_energy_history2_text_sensor(tsens))
+
+    if date_of_collect_cumulative_energy_history2_conf := config.get(CONF_DATE_OF_COLLECT_CUMULATIVE_ENERGY_HISTORY2):
+        tsens = await text_sensor.new_text_sensor(date_of_collect_cumulative_energy_history2_conf)
+        cg.add(var.set_date_of_collect_cumulative_energy_history2_text_sensor(tsens))

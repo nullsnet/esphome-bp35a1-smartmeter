@@ -51,11 +51,13 @@ uart:
   baud_rate: 115200
   stop_bits: 1
   parity: NONE
+  rx_buffer_size: 1024
 
 bp35a1_smartmeter:
   update_interval: 10s
   init_timeout: 180s
   loop_interval: 100ms
+  info_batch_delay: 500ms
   scan_channel_mask: 0xFFFFFFFF
   b_route_id: !secret b_route_id
   b_route_password: !secret b_route_password
@@ -95,8 +97,41 @@ bp35a1_smartmeter:
     name: "Standard Version Information"
   manufacturer_code:
     name: "Manufacturer Code"
+  production_number:
+    name: "Production Number"
   get_property_map:
     name: "Get Property Map"
+  operation_status:
+    name: "Operation Status"
+  fault_status:
+    name: "Fault Status"
+  current_time_setting:
+    name: "Current Time Setting"
+  current_date_setting:
+    name: "Current Date Setting"
+    device_class: date
+  status_change_announcement_property_map:
+    name: "Status Change Announcement PM"
+  coefficient:
+    name: "Coefficient"
+  cumulative_energy_effective_digits:
+    name: "Cumulative Energy Effective Digits"
+  cumulative_energy_unit:
+    name: "Cumulative Energy Unit"
+  cumulative_energy_history_positive:
+    name: "Cumulative Energy History Positive"
+  cumulative_energy_history_negative:
+    name: "Cumulative Energy History Negative"
+  date_of_collect_cumulative_energy_history:
+    name: "Date of Collect Cumulative Energy History"
+  fixed_cumulative_energy_positive:
+    name: "Fixed Cumulative Energy Positive"
+  fixed_cumulative_energy_negative:
+    name: "Fixed Cumulative Energy Negative"
+  cumulative_energy_history2:
+    name: "Cumulative Energy History2"
+  date_of_collect_cumulative_energy_history2:
+    name: "Date of Collect Cumulative Energy History2"
 
 sensor:
 

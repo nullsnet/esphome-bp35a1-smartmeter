@@ -19,6 +19,8 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_init_timeout(uint32_t ms) { init_timeout_ms_ = ms; }
     void set_loop_interval(uint32_t ms) { loop_interval_ms_ = ms; }
     void set_scan_channel_mask(uint32_t mask) { scan_channel_mask_ = mask; }
+    void set_info_batch_delay(uint32_t ms) { info_batch_delay_ms_ = ms; }
+    void set_info_batch_timeout(uint32_t ms) { info_batch_timeout_ms_ = ms; }
 
     void set_power_sensor(sensor::Sensor *s) { power_sensor_ = s; }
     void set_current_r_sensor(sensor::Sensor *s) { current_r_sensor_ = s; }
@@ -39,7 +41,23 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_installation_location_text_sensor(text_sensor::TextSensor *s) { installation_location_text_sensor_ = s; }
     void set_standard_version_information_text_sensor(text_sensor::TextSensor *s) { standard_version_information_text_sensor_ = s; }
     void set_manufacturer_code_text_sensor(text_sensor::TextSensor *s) { manufacturer_code_text_sensor_ = s; }
+    void set_production_number_text_sensor(text_sensor::TextSensor *s) { production_number_text_sensor_ = s; }
     void set_get_property_map_text_sensor(text_sensor::TextSensor *s) { get_property_map_text_sensor_ = s; }
+    void set_operation_status_text_sensor(text_sensor::TextSensor *s) { operation_status_text_sensor_ = s; }
+    void set_fault_status_text_sensor(text_sensor::TextSensor *s) { fault_status_text_sensor_ = s; }
+    void set_current_time_setting_text_sensor(text_sensor::TextSensor *s) { current_time_setting_text_sensor_ = s; }
+    void set_current_date_setting_text_sensor(text_sensor::TextSensor *s) { current_date_setting_text_sensor_ = s; }
+    void set_status_change_announcement_property_map_text_sensor(text_sensor::TextSensor *s) { status_change_announcement_property_map_text_sensor_ = s; }
+    void set_coefficient_text_sensor(text_sensor::TextSensor *s) { coefficient_text_sensor_ = s; }
+    void set_cumulative_energy_effective_digits_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_effective_digits_text_sensor_ = s; }
+    void set_cumulative_energy_unit_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_unit_text_sensor_ = s; }
+    void set_cumulative_energy_history_positive_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_history_positive_text_sensor_ = s; }
+    void set_cumulative_energy_history_negative_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_history_negative_text_sensor_ = s; }
+    void set_date_of_collect_cumulative_energy_history_text_sensor(text_sensor::TextSensor *s) { date_of_collect_cumulative_energy_history_text_sensor_ = s; }
+    void set_fixed_cumulative_energy_positive_text_sensor(text_sensor::TextSensor *s) { fixed_cumulative_energy_positive_text_sensor_ = s; }
+    void set_fixed_cumulative_energy_negative_text_sensor(text_sensor::TextSensor *s) { fixed_cumulative_energy_negative_text_sensor_ = s; }
+    void set_cumulative_energy_history2_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_history2_text_sensor_ = s; }
+    void set_date_of_collect_cumulative_energy_history2_text_sensor(text_sensor::TextSensor *s) { date_of_collect_cumulative_energy_history2_text_sensor_ = s; }
 
     void setup() override;
     void update() override;
@@ -49,6 +67,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
   protected:
     void publish_info_sensors_();
     void publish_meter_info_sensors_(const LowVoltageSmartElectricEnergyMeterClass &meter);
+    void build_info_batches_(const std::vector<uint8_t> &decoded_property_map);
 
     std::string b_route_id_;
     std::string b_route_password_;
@@ -72,7 +91,23 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     text_sensor::TextSensor *installation_location_text_sensor_{nullptr};
     text_sensor::TextSensor *standard_version_information_text_sensor_{nullptr};
     text_sensor::TextSensor *manufacturer_code_text_sensor_{nullptr};
+    text_sensor::TextSensor *production_number_text_sensor_{nullptr};
     text_sensor::TextSensor *get_property_map_text_sensor_{nullptr};
+    text_sensor::TextSensor *operation_status_text_sensor_{nullptr};
+    text_sensor::TextSensor *fault_status_text_sensor_{nullptr};
+    text_sensor::TextSensor *current_time_setting_text_sensor_{nullptr};
+    text_sensor::TextSensor *current_date_setting_text_sensor_{nullptr};
+    text_sensor::TextSensor *status_change_announcement_property_map_text_sensor_{nullptr};
+    text_sensor::TextSensor *coefficient_text_sensor_{nullptr};
+    text_sensor::TextSensor *cumulative_energy_effective_digits_text_sensor_{nullptr};
+    text_sensor::TextSensor *cumulative_energy_unit_text_sensor_{nullptr};
+    text_sensor::TextSensor *cumulative_energy_history_positive_text_sensor_{nullptr};
+    text_sensor::TextSensor *cumulative_energy_history_negative_text_sensor_{nullptr};
+    text_sensor::TextSensor *date_of_collect_cumulative_energy_history_text_sensor_{nullptr};
+    text_sensor::TextSensor *fixed_cumulative_energy_positive_text_sensor_{nullptr};
+    text_sensor::TextSensor *fixed_cumulative_energy_negative_text_sensor_{nullptr};
+    text_sensor::TextSensor *cumulative_energy_history2_text_sensor_{nullptr};
+    text_sensor::TextSensor *date_of_collect_cumulative_energy_history2_text_sensor_{nullptr};
 
     UARTDeviceAdapter *uart_adapter_{nullptr};
     BP35A1 *bp35a1_{nullptr};
@@ -83,8 +118,15 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     uint32_t init_timeout_ms_{180000};
     uint32_t loop_interval_ms_{100};
     uint32_t scan_channel_mask_{0xFFFFFFFF};
-    bool info_request_sent_{false};
+    uint32_t info_batch_delay_ms_{500};
+    uint32_t info_batch_timeout_ms_{5000};
+    uint32_t info_batch_last_send_ms_{0};
+    uint32_t info_batch_sent_ms_{0};
     bool info_sensors_published_{false};
+    uint8_t info_request_step_{0};
+    std::vector<std::vector<uint8_t>> info_batches_;
+    std::vector<std::vector<uint8_t>> info_retry_batches_;
+    uint8_t info_retry_step_{0};
 };
 
 }  // namespace bp35a1_smartmeter
