@@ -70,15 +70,15 @@ void BP35A1SmartMeterComponent::loop() {
             init_start_ms_ = now;
             ESP_LOGD(TAG, "Init started, state=%u", (uint8_t)bp35a1_->getInitializeState());
         } else if (now - init_start_ms_ >= init_timeout_ms_) {
-            ESP_LOGE(TAG, "Initialization timeout (%us), restarting...", init_timeout_ms_ / 1000);
+            ESP_LOGE(TAG, "Initialization timeout (%lus), restarting...", init_timeout_ms_ / 1000);
             esp_restart();
         } else {
             const uint32_t elapsed = (now - init_start_ms_) / 1000;
-            ESP_LOGD(TAG, "Init progress: %us / %us, state=%u", elapsed, init_timeout_ms_ / 1000, (uint8_t)bp35a1_->getInitializeState());
+            ESP_LOGD(TAG, "Init progress: %lus / %lus, state=%u", elapsed, init_timeout_ms_ / 1000, (uint8_t)bp35a1_->getInitializeState());
         }
         const uint32_t panaFails = bp35a1_->getPanaFailCount();
         if (panaFails > last_pana_fail_count_) {
-            ESP_LOGW(TAG, "B-route authentication failed %u time(s) - check b_route_id and b_route_password", panaFails);
+            ESP_LOGW(TAG, "B-route authentication failed %lu time(s) - check b_route_id and b_route_password", panaFails);
             last_pana_fail_count_ = panaFails;
         }
         bp35a1_->initializeLoop();
@@ -88,7 +88,7 @@ void BP35A1SmartMeterComponent::loop() {
     bp35a1_->communicationLoop(
         [this](const LowVoltageSmartElectricEnergyMeterClass &meter) {
             int32_t power;
-            float currentR, currentT, energy;
+            float currentR = 0.0f, currentT = 0.0f, energy = 0.0f;
             float energyReverse;
 
             if (meter.getInstantaneousPower(&power) &&
@@ -124,7 +124,7 @@ void BP35A1SmartMeterComponent::loop() {
 
         if (commState != BP35A1::CommunicationState::ready) {
             if (info_batch_sent_ms_ != 0 && (now - info_batch_sent_ms_) >= info_batch_timeout_ms_) {
-                ESP_LOGW(TAG, "Batch timeout (%ums) in state %u, queuing for retry",
+                ESP_LOGW(TAG, "Batch timeout (%lu ms) in state %u, queuing for retry",
                          info_batch_timeout_ms_, (uint)commState);
                 if (!info_batches_.empty() && info_request_step_ > 0 && info_request_step_ <= info_batches_.size()) {
                     info_retry_batches_.push_back(info_batches_[info_request_step_ - 1]);
@@ -256,8 +256,8 @@ void BP35A1SmartMeterComponent::publish_info_sensor_(text_sensor::TextSensor *se
         sensor->publish_state(buf);
     } else if (epc == 0x98 && bytes.size() >= 4) {  // CurrentDateSetting
         uint16_t year = (static_cast<uint16_t>(bytes[0]) << 8) | bytes[1];
-        char buf[11];
-        snprintf(buf, sizeof(buf), "%04d-%02d-%02d", year, bytes[2], bytes[3]);
+        char buf[20];
+        snprintf(buf, sizeof(buf), "%04u-%02u-%02u", year, bytes[2], bytes[3]);
         sensor->publish_state(buf);
     } else if (epc == 0xE1 && bytes.size() >= 1) {  // CumulativeEnergyUnit
         static const char *units[] = {"1 kWh", "0.1 kWh", "0.01 kWh", "0.001 kWh", "0.0001 kWh",
