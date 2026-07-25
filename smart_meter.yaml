@@ -95,6 +95,8 @@ bp35a1_smartmeter:
     name: "Installation Location"
   standard_version_information:
     name: "Standard Version Information"
+  fault_status:
+    name: "Fault Status"
   manufacturer_code:
     name: "Manufacturer Code"
   production_number:
@@ -103,8 +105,6 @@ bp35a1_smartmeter:
     name: "Get Property Map"
   operation_status:
     name: "Operation Status"
-  fault_status:
-    name: "Fault Status"
   current_time_setting:
     name: "Current Time Setting"
   current_date_setting:

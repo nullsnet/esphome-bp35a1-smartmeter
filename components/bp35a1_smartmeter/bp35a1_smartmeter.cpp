@@ -5,7 +5,7 @@ namespace bp35a1_smartmeter {
 
 static const char *const TAG = "bp35a1_smartmeter";
 
-static std::string bytes_to_hex(const std::vector<uint8_t> &bytes) {
+std::string BP35A1SmartMeterComponent::bytes_to_hex(const std::vector<uint8_t> &bytes) {
     std::string hex = "0x";
     for (const uint8_t &b : bytes) {
         char buf[4];
@@ -130,9 +130,9 @@ void BP35A1SmartMeterComponent::loop() {
                     info_retry_batches_.push_back(info_batches_[info_request_step_ - 1]);
                 }
                 bp35a1_->resetCommunicationState();
+                while (uart_adapter_->available()) uart_adapter_->read();
                 info_batch_sent_ms_ = 0;
                 info_batch_last_send_ms_ = now;
-                info_request_step_++;
             }
         }
 
@@ -156,6 +156,7 @@ void BP35A1SmartMeterComponent::loop() {
                     epc_list += buf;
                 }
                 ESP_LOGI(TAG, "Sending batch %u/%u: [%s]", info_request_step_ + 1, (uint)info_batches_.size(), epc_list.c_str());
+                while (uart_adapter_->available()) uart_adapter_->read();
                 bp35a1_->sendPropertyRequest(batch);
                 info_batch_last_send_ms_ = now;
                 info_batch_sent_ms_ = now;
@@ -174,6 +175,7 @@ void BP35A1SmartMeterComponent::loop() {
                     epc_list += buf;
                 }
                 ESP_LOGI(TAG, "Retrying batch %u/%u: [%s]", info_retry_step_ + 1, (uint)info_retry_batches_.size(), epc_list.c_str());
+                while (uart_adapter_->available()) uart_adapter_->read();
                 bp35a1_->sendPropertyRequest(batch);
                 info_batch_last_send_ms_ = now;
                 info_batch_sent_ms_ = now;
@@ -242,103 +244,46 @@ void BP35A1SmartMeterComponent::publish_info_sensors_() {
     }
 }
 
+void BP35A1SmartMeterComponent::publish_info_sensor_(text_sensor::TextSensor *sensor, uint8_t epc, const std::vector<uint8_t> &bytes) {
+    if (!sensor || bytes.empty()) return;
+
+    if (epc == 0x80 && bytes.size() >= 1) {  // OperationStatus
+        sensor->publish_state(bytes[0] == 0x30 ? "ON" : "OFF");
+    } else if (epc == 0x97 && bytes.size() >= 2) {  // CurrentTimeSetting
+        char buf[9];
+        snprintf(buf, sizeof(buf), (bytes.size() >= 3) ? "%02d:%02d:%02d" : "%02d:%02d",
+                 bytes[0], bytes[1], (bytes.size() >= 3) ? bytes[2] : 0);
+        sensor->publish_state(buf);
+    } else if (epc == 0x98 && bytes.size() >= 4) {  // CurrentDateSetting
+        uint16_t year = (static_cast<uint16_t>(bytes[0]) << 8) | bytes[1];
+        char buf[11];
+        snprintf(buf, sizeof(buf), "%04d-%02d-%02d", year, bytes[2], bytes[3]);
+        sensor->publish_state(buf);
+    } else if (epc == 0xE1 && bytes.size() >= 1) {  // CumulativeEnergyUnit
+        static const char *units[] = {"1 kWh", "0.1 kWh", "0.01 kWh", "0.001 kWh", "0.0001 kWh",
+                                      "?", "?", "?", "?", "?", "10 kWh", "100 kWh", "1000 kWh", "10000 kWh"};
+        uint8_t idx = bytes[0];
+        sensor->publish_state(idx < sizeof(units) / sizeof(units[0]) ? units[idx] : ("unknown (" + bytes_to_hex(bytes) + ")"));
+    } else {
+        std::string hex = bytes_to_hex(bytes);
+        if (hex.length() > 128) hex = hex.substr(0, 125) + "...";
+        sensor->publish_state(hex);
+    }
+}
+
 void BP35A1SmartMeterComponent::publish_meter_info_sensors_(const LowVoltageSmartElectricEnergyMeterClass &meter) {
     ESP_LOGI(TAG, "Publishing meter info sensors");
 
     int published = 0;
-    auto publish_hex = [&published](text_sensor::TextSensor *sensor, const std::string &name, const std::vector<uint8_t> &bytes) {
-        if (sensor && !bytes.empty()) {
-            std::string hex = bytes_to_hex(bytes);
-            if (hex.length() > 128) {
-                hex = hex.substr(0, 125) + "...";
-            }
-            sensor->publish_state(hex);
+    for (auto &[epc, sensor] : info_text_sensors_) {
+        std::vector<uint8_t> bytes;
+        if (meter.getVariableLengthPropertyData(epc, &bytes)) {
+            publish_info_sensor_(sensor, epc, bytes);
             published++;
-            ESP_LOGI(TAG, "  %s: %s (%zu bytes)", name.c_str(), hex.c_str(), bytes.size());
-        } else if (sensor) {
-            ESP_LOGW(TAG, "  %s: no data", name.c_str());
         }
-    };
-
-    std::vector<uint8_t> bytes;
-
-    // Base class properties (0x80-0x9F)
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::OperationStatus, &bytes))
-        publish_hex(operation_status_text_sensor_, "OperationStatus", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::InstallationLocation, &bytes))
-        publish_hex(installation_location_text_sensor_, "InstallationLocation", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::StandardVersionInformation, &bytes))
-        publish_hex(standard_version_information_text_sensor_, "StandardVersionInformation", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::FaultStatus, &bytes))
-        publish_hex(fault_status_text_sensor_, "FaultStatus", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::ManufacturerCode, &bytes))
-        publish_hex(manufacturer_code_text_sensor_, "ManufacturerCode", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::ProductionNumber, &bytes))
-        publish_hex(production_number_text_sensor_, "ProductionNumber", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::CurrentTimeSetting, &bytes) && bytes.size() >= 2) {
-        char buf[9];
-        if (bytes.size() >= 3)
-            snprintf(buf, sizeof(buf), "%02d:%02d:%02d", bytes[0], bytes[1], bytes[2]);
-        else
-            snprintf(buf, sizeof(buf), "%02d:%02d", bytes[0], bytes[1]);
-        current_time_setting_text_sensor_->publish_state(buf);
-        ESP_LOGD(TAG, "CurrentTimeSetting: %s", buf);
-    } else {
-        ESP_LOGD(TAG, "CurrentTimeSetting: not available (bytes=%zu)", bytes.size());
     }
 
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::CurrentDateSetting, &bytes) && bytes.size() >= 4) {
-        uint16_t year = (static_cast<uint16_t>(bytes[0]) << 8) | bytes[1];
-        char buf[11];
-        snprintf(buf, sizeof(buf), "%04d-%02d-%02d", year, bytes[2], bytes[3]);
-        current_date_setting_text_sensor_->publish_state(buf);
-        ESP_LOGD(TAG, "CurrentDateSetting: %s", buf);
-    }
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::StatusChangeAnnouncementPropertyMap, &bytes))
-        publish_hex(status_change_announcement_property_map_text_sensor_, "StatusChangeAnnouncementPropertyMap", bytes);
-
-    if (meter.getVariableLengthPropertyData(EchonetLite::Property::GetPropertyMap, &bytes))
-        publish_hex(get_property_map_text_sensor_, "GetPropertyMap", bytes);
-
-    // Meter-specific properties (0xC0-0xEF)
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::Coefficient, &bytes))
-        publish_hex(coefficient_text_sensor_, "Coefficient", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeAmountEnergyEffectiveDigits, &bytes))
-        publish_hex(cumulative_energy_effective_digits_text_sensor_, "CumulativeAmountEnergyEffectiveDigits", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyUnit, &bytes))
-        publish_hex(cumulative_energy_unit_text_sensor_, "CumulativeEnergyUnit", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyHistoryPositive, &bytes))
-        publish_hex(cumulative_energy_history_positive_text_sensor_, "CumulativeEnergyHistoryPositive", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyHistoryNegative, &bytes))
-        publish_hex(cumulative_energy_history_negative_text_sensor_, "CumulativeEnergyHistoryNegative", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::DateOfCollectCumulativeEnergyHistory, &bytes))
-        publish_hex(date_of_collect_cumulative_energy_history_text_sensor_, "DateOfCollectCumulativeEnergyHistory", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::FixedCumulativeEnergyPositive, &bytes))
-        publish_hex(fixed_cumulative_energy_positive_text_sensor_, "FixedCumulativeEnergyPositive", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::FixedCumulativeEnergyNegative, &bytes))
-        publish_hex(fixed_cumulative_energy_negative_text_sensor_, "FixedCumulativeEnergyNegative", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::CumulativeEnergyHistory2, &bytes))
-        publish_hex(cumulative_energy_history2_text_sensor_, "CumulativeEnergyHistory2", bytes);
-
-    if (meter.getVariableLengthPropertyData(LowVoltageSmartElectricEnergyMeterClass::Property::DateOfCollectCumulativeEnergyHistory2, &bytes))
-        publish_hex(date_of_collect_cumulative_energy_history2_text_sensor_, "DateOfCollectCumulativeEnergyHistory2", bytes);
-
-    ESP_LOGI(TAG, "Published %d meter info sensors (20 total properties checked)", published);
+    ESP_LOGI(TAG, "Published %d meter info sensors (%zu configured)", published, info_text_sensors_.size());
 }
 
 void BP35A1SmartMeterComponent::build_info_batches_(const std::vector<uint8_t> &decoded_property_map) {
@@ -406,26 +351,13 @@ void BP35A1SmartMeterComponent::dump_config() {
     LOG_SENSOR("  ", "LQI", lqi_sensor_);
     LOG_TEXT_SENSOR("  ", "Pair ID", pair_id_text_sensor_);
     LOG_TEXT_SENSOR("  ", "Scan Mode", scan_mode_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Installation Location", installation_location_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Standard Version Information", standard_version_information_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Fault Status", fault_status_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Manufacturer Code", manufacturer_code_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Production Number", production_number_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Get Property Map", get_property_map_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Operation Status", operation_status_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Current Time Setting", current_time_setting_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Current Date Setting", current_date_setting_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Status Change Announcement PM", status_change_announcement_property_map_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Coefficient", coefficient_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Cumulative Energy Effective Digits", cumulative_energy_effective_digits_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Cumulative Energy Unit", cumulative_energy_unit_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Cumulative Energy History Positive", cumulative_energy_history_positive_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Cumulative Energy History Negative", cumulative_energy_history_negative_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Date of Collect Cumulative Energy History", date_of_collect_cumulative_energy_history_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Fixed Cumulative Energy Positive", fixed_cumulative_energy_positive_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Fixed Cumulative Energy Negative", fixed_cumulative_energy_negative_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Cumulative Energy History2", cumulative_energy_history2_text_sensor_);
-    LOG_TEXT_SENSOR("  ", "Date of Collect Cumulative Energy History2", date_of_collect_cumulative_energy_history2_text_sensor_);
+
+    ESP_LOGCONFIG(TAG, "  Meter Info Sensors:");
+    for (auto &[epc, sensor] : info_text_sensors_) {
+        if (sensor) {
+            ESP_LOGCONFIG(TAG, "    0x%02X: %s", epc, sensor->get_name().c_str());
+        }
+    }
 }
 
 }  // namespace bp35a1_smartmeter

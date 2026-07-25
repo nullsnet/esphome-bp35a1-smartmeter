@@ -6,6 +6,7 @@
 #include "esphome/components/uart/uart.h"
 #include "BP35A1.hpp"
 #include "UARTDeviceAdapter.h"
+#include <map>
 
 namespace esphome {
 namespace bp35a1_smartmeter {
@@ -22,6 +23,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_info_batch_delay(uint32_t ms) { info_batch_delay_ms_ = ms; }
     void set_info_batch_timeout(uint32_t ms) { info_batch_timeout_ms_ = ms; }
 
+    // Periodic sensors
     void set_power_sensor(sensor::Sensor *s) { power_sensor_ = s; }
     void set_current_r_sensor(sensor::Sensor *s) { current_r_sensor_ = s; }
     void set_current_t_sensor(sensor::Sensor *s) { current_t_sensor_ = s; }
@@ -29,6 +31,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_energy_reverse_sensor(sensor::Sensor *s) { energy_reverse_sensor_ = s; }
     void set_connection_sensor(binary_sensor::BinarySensor *s) { connection_sensor_ = s; }
 
+    // Device info sensors (from BP35A1 init)
     void set_ipv6_address_text_sensor(text_sensor::TextSensor *s) { ipv6_address_text_sensor_ = s; }
     void set_dest_ipv6_address_text_sensor(text_sensor::TextSensor *s) { dest_ipv6_address_text_sensor_ = s; }
     void set_mac_address_text_sensor(text_sensor::TextSensor *s) { mac_address_text_sensor_ = s; }
@@ -38,26 +41,9 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     void set_lqi_sensor(sensor::Sensor *s) { lqi_sensor_ = s; }
     void set_pair_id_text_sensor(text_sensor::TextSensor *s) { pair_id_text_sensor_ = s; }
     void set_scan_mode_text_sensor(text_sensor::TextSensor *s) { scan_mode_text_sensor_ = s; }
-    void set_installation_location_text_sensor(text_sensor::TextSensor *s) { installation_location_text_sensor_ = s; }
-    void set_standard_version_information_text_sensor(text_sensor::TextSensor *s) { standard_version_information_text_sensor_ = s; }
-    void set_manufacturer_code_text_sensor(text_sensor::TextSensor *s) { manufacturer_code_text_sensor_ = s; }
-    void set_production_number_text_sensor(text_sensor::TextSensor *s) { production_number_text_sensor_ = s; }
-    void set_get_property_map_text_sensor(text_sensor::TextSensor *s) { get_property_map_text_sensor_ = s; }
-    void set_operation_status_text_sensor(text_sensor::TextSensor *s) { operation_status_text_sensor_ = s; }
-    void set_fault_status_text_sensor(text_sensor::TextSensor *s) { fault_status_text_sensor_ = s; }
-    void set_current_time_setting_text_sensor(text_sensor::TextSensor *s) { current_time_setting_text_sensor_ = s; }
-    void set_current_date_setting_text_sensor(text_sensor::TextSensor *s) { current_date_setting_text_sensor_ = s; }
-    void set_status_change_announcement_property_map_text_sensor(text_sensor::TextSensor *s) { status_change_announcement_property_map_text_sensor_ = s; }
-    void set_coefficient_text_sensor(text_sensor::TextSensor *s) { coefficient_text_sensor_ = s; }
-    void set_cumulative_energy_effective_digits_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_effective_digits_text_sensor_ = s; }
-    void set_cumulative_energy_unit_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_unit_text_sensor_ = s; }
-    void set_cumulative_energy_history_positive_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_history_positive_text_sensor_ = s; }
-    void set_cumulative_energy_history_negative_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_history_negative_text_sensor_ = s; }
-    void set_date_of_collect_cumulative_energy_history_text_sensor(text_sensor::TextSensor *s) { date_of_collect_cumulative_energy_history_text_sensor_ = s; }
-    void set_fixed_cumulative_energy_positive_text_sensor(text_sensor::TextSensor *s) { fixed_cumulative_energy_positive_text_sensor_ = s; }
-    void set_fixed_cumulative_energy_negative_text_sensor(text_sensor::TextSensor *s) { fixed_cumulative_energy_negative_text_sensor_ = s; }
-    void set_cumulative_energy_history2_text_sensor(text_sensor::TextSensor *s) { cumulative_energy_history2_text_sensor_ = s; }
-    void set_date_of_collect_cumulative_energy_history2_text_sensor(text_sensor::TextSensor *s) { date_of_collect_cumulative_energy_history2_text_sensor_ = s; }
+
+    // Meter info sensors (ECHONET property map)
+    void set_info_text_sensor(uint8_t epc, text_sensor::TextSensor *s) { info_text_sensors_[epc] = s; }
 
     void setup() override;
     void update() override;
@@ -67,11 +53,14 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
   protected:
     void publish_info_sensors_();
     void publish_meter_info_sensors_(const LowVoltageSmartElectricEnergyMeterClass &meter);
+    void publish_info_sensor_(text_sensor::TextSensor *sensor, uint8_t epc, const std::vector<uint8_t> &bytes);
     void build_info_batches_(const std::vector<uint8_t> &decoded_property_map);
+    static std::string bytes_to_hex(const std::vector<uint8_t> &bytes);
 
     std::string b_route_id_;
     std::string b_route_password_;
 
+    // Periodic sensors
     sensor::Sensor *power_sensor_{nullptr};
     sensor::Sensor *current_r_sensor_{nullptr};
     sensor::Sensor *current_t_sensor_{nullptr};
@@ -79,6 +68,7 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     sensor::Sensor *energy_reverse_sensor_{nullptr};
     binary_sensor::BinarySensor *connection_sensor_{nullptr};
 
+    // Device info sensors (BP35A1 init)
     text_sensor::TextSensor *ipv6_address_text_sensor_{nullptr};
     text_sensor::TextSensor *dest_ipv6_address_text_sensor_{nullptr};
     text_sensor::TextSensor *mac_address_text_sensor_{nullptr};
@@ -88,26 +78,9 @@ class BP35A1SmartMeterComponent : public PollingComponent, public uart::UARTDevi
     sensor::Sensor *lqi_sensor_{nullptr};
     text_sensor::TextSensor *pair_id_text_sensor_{nullptr};
     text_sensor::TextSensor *scan_mode_text_sensor_{nullptr};
-    text_sensor::TextSensor *installation_location_text_sensor_{nullptr};
-    text_sensor::TextSensor *standard_version_information_text_sensor_{nullptr};
-    text_sensor::TextSensor *manufacturer_code_text_sensor_{nullptr};
-    text_sensor::TextSensor *production_number_text_sensor_{nullptr};
-    text_sensor::TextSensor *get_property_map_text_sensor_{nullptr};
-    text_sensor::TextSensor *operation_status_text_sensor_{nullptr};
-    text_sensor::TextSensor *fault_status_text_sensor_{nullptr};
-    text_sensor::TextSensor *current_time_setting_text_sensor_{nullptr};
-    text_sensor::TextSensor *current_date_setting_text_sensor_{nullptr};
-    text_sensor::TextSensor *status_change_announcement_property_map_text_sensor_{nullptr};
-    text_sensor::TextSensor *coefficient_text_sensor_{nullptr};
-    text_sensor::TextSensor *cumulative_energy_effective_digits_text_sensor_{nullptr};
-    text_sensor::TextSensor *cumulative_energy_unit_text_sensor_{nullptr};
-    text_sensor::TextSensor *cumulative_energy_history_positive_text_sensor_{nullptr};
-    text_sensor::TextSensor *cumulative_energy_history_negative_text_sensor_{nullptr};
-    text_sensor::TextSensor *date_of_collect_cumulative_energy_history_text_sensor_{nullptr};
-    text_sensor::TextSensor *fixed_cumulative_energy_positive_text_sensor_{nullptr};
-    text_sensor::TextSensor *fixed_cumulative_energy_negative_text_sensor_{nullptr};
-    text_sensor::TextSensor *cumulative_energy_history2_text_sensor_{nullptr};
-    text_sensor::TextSensor *date_of_collect_cumulative_energy_history2_text_sensor_{nullptr};
+
+    // Meter info sensors (ECHONET property map)
+    std::map<uint8_t, text_sensor::TextSensor *> info_text_sensors_;
 
     UARTDeviceAdapter *uart_adapter_{nullptr};
     BP35A1 *bp35a1_{nullptr};
