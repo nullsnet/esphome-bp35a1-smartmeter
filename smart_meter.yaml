@@ -4,8 +4,8 @@ esphome:
   libraries:
     - Arduino_BP35A1_B_route=https://github.com/nullsnet/Arduino_BP35A1_B_route.git
     - Arduino_EchonetLite=https://github.com/nullsnet/Arduino_EchonetLite.git
-  build_flags:
-    - "-DUSE_ESP_LOG"
+  platformio_options:
+    lib_ldf_mode: deep
 
 external_components:
   - source:
@@ -21,7 +21,7 @@ external_components:
 esp32:
   board: m5stick-c
   framework:
-    type: arduino
+    type: esp-idf
     advanced:
       sram1_as_iram: true
 

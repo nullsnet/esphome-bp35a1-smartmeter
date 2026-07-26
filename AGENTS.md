@@ -1,5 +1,7 @@
 # AGENTS.md
 
+- Lanuage : Japanese
+
 ## Build
 
 ```bash
@@ -12,13 +14,12 @@ First build takes ~60s, subsequent builds ~14s.
 
 ## Structure
 
-- `smart_meter.yaml` — main config (wifi, ota, api, uart, sensors, web_server)
+- `smart_meter.yaml` — main config (wifi, ota, api, uart, sensors, web_server), framework: esp-idf
 - `secrets.yaml` — credentials (excluded from git via `.gitignore`)
 - `components/bp35a1_smartmeter/` — ESPHome custom component (3 files: `__init__.py`, `.cpp`, `.h`)
 
-External libraries are pulled via `lib_deps` in YAML:
-- `nullsnet/Arduino_BP35A1_B_route` — BP35A1 Wi-SUN state machine + UART protocol
-- `nullsnet/Arduino_EchonetLite` — EchonetLite protocol parser
+External libraries are pulled via `libraries` in YAML (mapped to PlatformIO `lib_deps`).
+`lib_ldf_mode: deep` is set in `platformio_options` to resolve nested headers from Arduino libraries.
 
 Do NOT copy library files into `components/`. PlatformIO handles them automatically.
 
