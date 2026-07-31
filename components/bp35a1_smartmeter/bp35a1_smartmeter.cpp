@@ -18,7 +18,7 @@ std::string BP35A1SmartMeterComponent::bytes_to_hex(const std::vector<uint8_t> &
 void BP35A1SmartMeterComponent::setup() {
     ESP_LOGI(TAG, "BP35A1 Smart Meter Component initialized");
     ESP_LOGD(TAG, "B-route ID: %s", b_route_id_.c_str());
-    ESP_LOGD(TAG, "Scan channel mask: 0x%08X", scan_channel_mask_);
+    ESP_LOGD(TAG, "Scan channel mask: 0x%08X", (unsigned) scan_channel_mask_);
 
     uart_adapter_ = new UARTDeviceAdapter(*this);
     bp35a1_ = new BP35A1(b_route_id_, b_route_password_, *uart_adapter_);
